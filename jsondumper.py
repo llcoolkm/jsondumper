@@ -1,32 +1,48 @@
 #!/usr/bin/env python3
-"""
-
-Simple HTTP server in python for logging requests
-
-Usage:
-    ./jsondumper.py [port]
-
-"""
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import logging
+#
+# WHO
+#
+#  km@grogg.org
+#
+# WHAT
+#
+#  Simple HTTP server that will dump out all JSON POST requests sent
+#
+#------------------------------------------------------------------------------
+# imports {{{
+from http.server import BaseHTTPRequestHandler,HTTPServer
+from urllib.request import Request
+from urllib.request import urlopen
 import json
+import logging
+import argparse
 
-class jsondumper(BaseHTTPRequestHandler):
+# }}}
+# class JSONDumper(BaseHTTPRequestHandler): {{{
+#------------------------------------------------------------------------------
+class JSONDumper(BaseHTTPRequestHandler):
 
-    def _set_response(self):
-        self.send_response(200)
+    def _set_response(self, code):
+        """
+        Send a nice response
+        """
+        self.send_response(code)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
+
+        return
 
     def do_GET(self):
         """
         Handle GET requests
         """
 
-        logging.info("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))
+        logging.info("GET request,\nPath: %s\nHeaders:\n%s", str(self.path), str(self.headers))
 
         self._set_response()
         self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
+
+        return
 
     def do_POST(self):
         """
@@ -35,24 +51,38 @@ class jsondumper(BaseHTTPRequestHandler):
 
         # Get the data size
         content_length = int(self.headers['Content-Length'])
+
         # Read the data
-        post_data = self.rfile.read(content_length)
-        # Make JSON pretty
-        json_data = json.dumps(json.loads(post_data), indent=4, sort_keys=False)
+        post_data = self.rfile.read(content_length).decode('utf-8')
 
-        logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
-               str(self.path), str(self.headers), json_data)
+        # Extract JSON
+        try:
+            json_data = json.loads(post_data)
+            post_data = json.dumps(json_data, indent=4, sort_keys=False)
+        except:
+            json_data = None
+            post_data = "ERROR: No JSON data found"
 
-        self._set_response()
-        self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
+        logging.info(">>> POST\nPATH: %s\nHEADERS:\n%sBODY:\n%s\n",
+            str(self.path), str(self.headers), post_data)
 
-def run(server_class=HTTPServer, handler_class=jsondumper, port=81):
+        # Always be content - Philippians 4:11
+        self._set_response(200)
+        logging.info("POST request for {}".format(self.path).encode('utf-8'))
+
+        return
+
+
+# }}}
+# def main(port)
+#------------------------------------------------------------------------------
+def main(port):
 
     logging.basicConfig(level=logging.INFO)
 
     server_address = ('', port)
-    httpd = server_class(server_address, handler_class)
-    logging.info('Starting httpd\n')
+    logging.info('Starting httpd')
+    httpd = HTTPServer(server_address, JSONDumper)
 
     # Go on forever
     try:
@@ -60,14 +90,20 @@ def run(server_class=HTTPServer, handler_class=jsondumper, port=81):
     except KeyboardInterrupt:
         pass
 
+    logging.info('Stopping httpd')
     httpd.server_close()
-    logging.info('Stopping httpd\n')
 
+
+# }}}
+# if __name__ == '__main__': {{{
+#------------------------------------------------------------------------------
 if __name__ == '__main__':
-    from sys import argv
 
-    if len(argv) == 2:
-        run(port=int(argv[1]))
-    else:
-        print('\nUsage: ./jsondumper.py <port>\n')
+    # Parse arguments
+    parser = argparse.ArgumentParser(description = 'jsondumper')
+    parser.add_argument('--port', '-p', type=int, default=81, help='Port to listen on. Default is 81')
+    args = parser.parse_args()
 
+    main(port=args.port)
+
+# }}}
