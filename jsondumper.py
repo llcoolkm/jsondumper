@@ -10,19 +10,20 @@
 #
 #------------------------------------------------------------------------------
 # imports {{{
-from http.server import BaseHTTPRequestHandler,HTTPServer
+from http.server import SimpleHTTPRequestHandler,HTTPServer
 from urllib.request import Request
 from urllib.request import urlopen
 import json
 import logging
 import argparse
+import ssl
 
 # }}}
-# class JSONDumper(BaseHTTPRequestHandler): {{{
+# class JSONDumper(SimpleHTTPRequestHandler): {{{
 #------------------------------------------------------------------------------
-class JSONDumper(BaseHTTPRequestHandler):
+class JSONDumper(SimpleHTTPRequestHandler):
 
-    def _set_response(self, code):
+    def __send_response(self, code):
         """
         Send a nice response
         """
@@ -39,7 +40,7 @@ class JSONDumper(BaseHTTPRequestHandler):
 
         logging.info("GET request,\nPath: %s\nHeaders:\n%s", str(self.path), str(self.headers))
 
-        self._set_response()
+        self.__send_response(200)
         self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
 
         return
@@ -67,22 +68,23 @@ class JSONDumper(BaseHTTPRequestHandler):
             str(self.path), str(self.headers), post_data)
 
         # Always be content - Philippians 4:11
-        self._set_response(200)
+        self.__send_response(200)
         logging.info("POST request for {}".format(self.path).encode('utf-8'))
 
         return
 
 
 # }}}
-# def main(port)
+# def main(port): {{{
 #------------------------------------------------------------------------------
-def main(port):
+def main(port, ssl):
 
     logging.basicConfig(level=logging.INFO)
 
-    server_address = ('', port)
     logging.info('Starting httpd')
-    httpd = HTTPServer(server_address, JSONDumper)
+    httpd = HTTPServer(('', port), JSONDumper)
+    if ssl:
+        httpd.socket = ssl.wrap_socket(httpd.socket, keyfile='privkey.pem', certfile='server.pem', server_side=True)
 
     # Go on forever
     try:
@@ -102,8 +104,9 @@ if __name__ == '__main__':
     # Parse arguments
     parser = argparse.ArgumentParser(description = 'jsondumper')
     parser.add_argument('--port', '-p', type=int, default=81, help='Port to listen on. Default is 81')
+    parser.add_argument('--ssl', '-s', action='store_true', help='Use SSL')
     args = parser.parse_args()
 
-    main(port=args.port)
+    main(args.port, args.ssl)
 
 # }}}
