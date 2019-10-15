@@ -18,42 +18,43 @@ import logging
 import argparse
 import ssl
 
+
 # }}}
 # class JSONDumper(SimpleHTTPRequestHandler): {{{
 #------------------------------------------------------------------------------
 class JSONDumper(SimpleHTTPRequestHandler):
 
-    def __send_response(self, code):
-        """
-        Send a nice response
-        """
+    def _send_response(self, code):
+        """Send a nice response"""
+
         self.send_response(code)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
         return
 
+
+# }}}
+#------------------------------------------------------------------------------
     def do_GET(self):
-        """
-        Handle GET requests
-        """
+        """Handle GET requests"""
 
-        logging.info("GET request,\nPath: %s\nHeaders:\n%s", str(self.path), str(self.headers))
+        logging.info("GET request,\nPath: %s\nHeaders:\n%s", str(self.path),
+            str(self.headers))
 
-        self.__send_response(200)
+        self._send_response(200)
         self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
 
         return
 
+
+# }}}
+#------------------------------------------------------------------------------
     def do_POST(self):
-        """
-        Handle POST requests
-        """
+        """Handle POST requests"""
 
-        # Get the data size
+        # Get the data size & read the data
         content_length = int(self.headers['Content-Length'])
-
-        # Read the data
         post_data = self.rfile.read(content_length).decode('utf-8')
 
         # Extract JSON
@@ -62,14 +63,14 @@ class JSONDumper(SimpleHTTPRequestHandler):
             post_data = json.dumps(json_data, indent=4, sort_keys=False)
         except:
             json_data = None
-            post_data = "ERROR: No JSON data found"
+#            post_data = "ERROR: No JSON data found"
 
         logging.info(">>> POST\nPATH: %s\nHEADERS:\n%sBODY:\n%s\n",
             str(self.path), str(self.headers), post_data)
 
         # Always be content - Philippians 4:11
-        self.__send_response(200)
-        logging.info("POST request for {}".format(self.path).encode('utf-8'))
+        self._send_response(200)
+        logging.info("POST request for %s", self.path.encode('utf-8'))
 
         return
 
@@ -84,7 +85,8 @@ def main(port, ssl):
     logging.info('Starting httpd')
     httpd = HTTPServer(('', port), JSONDumper)
     if ssl:
-        httpd.socket = ssl.wrap_socket(httpd.socket, keyfile='privkey.pem', certfile='server.pem', server_side=True)
+        httpd.socket = ssl.wrap_socket(httpd.socket, keyfile='privkey.pem',
+            certfile='server.pem', server_side=True)
 
     # Go on forever
     try:
@@ -97,16 +99,17 @@ def main(port, ssl):
 
 
 # }}}
-# if __name__ == '__main__': {{{
+# if _name_ == '_main_': {{{
 #------------------------------------------------------------------------------
-if __name__ == '__main__':
+if _name_ == '_main_':
 
     # Parse arguments
-    parser = argparse.ArgumentParser(description = 'jsondumper')
+    parser = argparse.ArgumentParser(description='jsondumper')
     parser.add_argument('--port', '-p', type=int, default=81, help='Port to listen on. Default is 81')
     parser.add_argument('--ssl', '-s', action='store_true', help='Use SSL')
     args = parser.parse_args()
 
     main(args.port, args.ssl)
+
 
 # }}}
