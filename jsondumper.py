@@ -82,8 +82,8 @@ def main(port, ssl):
 
     logging.basicConfig(level=logging.INFO)
 
-    logging.info('Starting httpd')
     httpd = HTTPServer(('', port), JSONDumper)
+    logging.info('Started HTTPd on port %i', port)
     if ssl:
         httpd.socket = ssl.wrap_socket(httpd.socket, keyfile='privkey.pem',
             certfile='server.pem', server_side=True)
@@ -94,14 +94,14 @@ def main(port, ssl):
     except KeyboardInterrupt:
         pass
 
-    logging.info('Stopping httpd')
     httpd.server_close()
+    logging.info('Stopped HTTPd')
 
 
 # }}}
-# if _name_ == '_main_': {{{
+# if __name__ == '__main__': {{{
 #------------------------------------------------------------------------------
-if _name_ == '_main_':
+if __name__ == '__main__':
 
     # Parse arguments
     parser = argparse.ArgumentParser(description='jsondumper')
