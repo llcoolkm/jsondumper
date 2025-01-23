@@ -8,9 +8,9 @@
 #
 #  Simple HTTP server that will dump out all JSON POST requests sent
 #
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # imports {{{
-from http.server import SimpleHTTPRequestHandler,HTTPServer
+from http.server import SimpleHTTPRequestHandler, HTTPServer
 from urllib.request import Request
 from urllib.request import urlopen
 import json
@@ -21,7 +21,7 @@ import ssl
 
 # }}}
 # class JSONDumper(SimpleHTTPRequestHandler): {{{
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 class JSONDumper(SimpleHTTPRequestHandler):
 
     def _send_response(self, code):
@@ -35,21 +35,24 @@ class JSONDumper(SimpleHTTPRequestHandler):
 
 
 # }}}
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
     def do_GET(self):
         """Handle GET requests"""
 
         logging.info("GET request,\nPath: %s\nHeaders:\n%s", str(self.path),
-            str(self.headers))
+                     str(self.headers))
 
         self._send_response(200)
-        self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
+        self.wfile.write("GET request for {}".format(
+            self.path).encode('utf-8'))
 
         return
 
 
 # }}}
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
     def do_POST(self):
         """Handle POST requests"""
 
@@ -66,7 +69,7 @@ class JSONDumper(SimpleHTTPRequestHandler):
 #            post_data = "ERROR: No JSON data found"
 
         logging.info(">>> POST\nPATH: %s\nHEADERS:\n%sBODY:\n%s\n",
-            str(self.path), str(self.headers), post_data)
+                     str(self.path), str(self.headers), post_data)
 
         # Always be content - Philippians 4:11
         self._send_response(200)
@@ -77,7 +80,7 @@ class JSONDumper(SimpleHTTPRequestHandler):
 
 # }}}
 # def main(port): {{{
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def main(port, ssl):
 
     logging.basicConfig(level=logging.INFO)
@@ -86,7 +89,7 @@ def main(port, ssl):
     logging.info('Started HTTPd on port %i', port)
     if ssl:
         httpd.socket = ssl.wrap_socket(httpd.socket, keyfile='privkey.pem',
-            certfile='server.pem', server_side=True)
+                                       certfile='server.pem', server_side=True)
 
     # Go on forever
     try:
@@ -100,12 +103,13 @@ def main(port, ssl):
 
 # }}}
 # if __name__ == '__main__': {{{
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 if __name__ == '__main__':
 
     # Parse arguments
     parser = argparse.ArgumentParser(description='jsondumper')
-    parser.add_argument('--port', '-p', type=int, default=81, help='Port to listen on. Default is 81')
+    parser.add_argument('--port', '-p', type=int, default=81,
+                        help='Port to listen on. Default is 81')
     parser.add_argument('--ssl', '-s', action='store_true', help='Use SSL')
     args = parser.parse_args()
 
